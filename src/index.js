@@ -1,4 +1,4 @@
-import { BehaviorSubject, fromEvent, map, merge, of } from "rxjs";
+import { BehaviorSubject, filter, fromEvent, map, merge, of } from "rxjs";
 
 /*
 Cells hold the state. A cell variable is prefixed with `c`.
@@ -23,6 +23,10 @@ function hold(stream, defaultValue) {
   const cell = new BehaviorSubject(defaultValue);
   stream.subscribe(cell);
   return cell;
+}
+
+function isHoldTimeInputValid(v) {
+  return v.length > 0 && !Number.isNaN(parseInt(v)) && parseInt(v) >= 1000;
 }
 
 const sLongClickToggleInit = of(
@@ -64,17 +68,32 @@ const sHoldTimeInput = fromEvent(
   "input"
 ).pipe(map((ev) => ev.target.value));
 
-const sHoldTimeChange = merge(sHoldTimeInit, sHoldTimeInput).pipe(
-  map((v) => parseInt(v))
-);
+const sHoldTimeChange = merge(sHoldTimeInit, sHoldTimeInput);
 
-const cHoldTime = hold(sHoldTimeChange, 1000);
+const cHoldTimeRaw = hold(sHoldTimeChange, "1000");
 
-cHoldTime.subscribe(function (v) {
+cHoldTimeRaw.subscribe(function (v) {
   const e = document.querySelector("#holdTime");
   e.value = v;
 });
 
-cHoldTime.subscribe(function (v) {
+const sHoldTimeParsed = sHoldTimeChange.pipe(
+  filter((v) => isHoldTimeInputValid(v))
+);
+
+const cHoldTimeParsed = hold(sHoldTimeParsed, 1000);
+
+cHoldTimeParsed.subscribe(function (v) {
   window.localStorage.setItem("holdTime", JSON.stringify(v));
+});
+
+const sIsHoldTimeValid = sHoldTimeChange.pipe(
+  map((v) => isHoldTimeInputValid(v))
+);
+
+const cIsHoldTimeValid = hold(sIsHoldTimeValid, true);
+
+cIsHoldTimeValid.subscribe(function (v) {
+  const e = document.querySelector("#holdTime");
+  e.setAttribute("aria-invalid", v ? "false" : "true");
 });

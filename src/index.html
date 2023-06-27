@@ -2,6 +2,20 @@
 <html lang="en">
 <head>
     <title>RxJS Form PoC</title>
+    <style>
+        [aria-invalid="true"] {
+            background-color: lightpink;
+        }
+
+        [aria-invalid="false"] ~ [id^='error-'] {
+            display: none;
+        }
+
+        [aria-invalid="true"] ~ [id^='error-'] {
+            display: block;
+            color: red;
+        }
+    </style>
 </head>
 <body>
 <form name="preferences">
@@ -11,7 +25,8 @@
     </div>
     <div>
         <label for="holdTime">Hold time?</label>
-        <input type="text" id="holdTime"/>
+        <input type="text" id="holdTime" aria-invalid="false" aria-describedby="holdTimeError"/>
+        <p id='error-hold-time'>Enter a value greater than 1000 milliseconds</p>
     </div>
 </form>
 <script src="./index.build.js"></script>
