@@ -1,6 +1,13 @@
 import { BehaviorSubject, filter, fromEvent, map, merge, of } from "rxjs";
 
 /*
+Ignore everything below the dashed line, for this code at least.
+
+For a small, simple form like this, cells add an extra overhead.
+So now the form DOM elements hold the current state, while streams propagate the changes.
+No cells for now.
+---------
+
 Cells hold the state. A cell variable is prefixed with `c`.
 Streams propagate changes in the state. A stream variable is prefixed with `s`.
 
@@ -30,70 +37,62 @@ function isHoldTimeInputValid(v) {
 }
 
 const sLongClickToggleInit = of(
-  window.localStorage.getItem("longClickToggle")
+    window.localStorage.getItem("longClickToggle") || JSON.stringify(true)
 ).pipe(map((v) => JSON.parse(v)));
 
-const sLongClickToggleInput = fromEvent(
-  document.querySelector("#longClickToggle"),
-  "change"
-).pipe(map((ev) => ev.target.checked));
-
-const sLongClickToggleChange = merge(
-  sLongClickToggleInit,
-  sLongClickToggleInput
-);
-
-const cLongClickToggle = hold(sLongClickToggleChange, true);
-
-cLongClickToggle.subscribe(function (v) {
+sLongClickToggleInit.subscribe((v) => {
   const e = document.querySelector("#longClickToggle");
   e.checked = v;
 });
 
-cLongClickToggle.subscribe(function (v) {
+const sLongClickToggleInput = fromEvent(
+    document.querySelector("#longClickToggle"),
+    "change"
+).pipe(map((ev) => ev.target.checked));
+
+const sLongClickToggleChange = merge(
+    sLongClickToggleInit,
+    sLongClickToggleInput
+);
+
+sLongClickToggleChange.subscribe(function (v) {
   const e = document.querySelector("#holdTime");
   e.disabled = !v;
 });
 
-cLongClickToggle.subscribe(function (v) {
+sLongClickToggleChange.subscribe(function (v) {
   window.localStorage.setItem("longClickToggle", JSON.stringify(v));
 });
 
-const sHoldTimeInit = of(window.localStorage.getItem("holdTime")).pipe(
-  map((v) => JSON.parse(v))
-);
+const sHoldTimeInit = of(
+    window.localStorage.getItem("holdTime") || JSON.stringify("1000")
+).pipe(map((v) => JSON.parse(v)));
 
-const sHoldTimeInput = fromEvent(
-  document.querySelector("#holdTime"),
-  "input"
-).pipe(map((ev) => ev.target.value));
-
-const sHoldTimeChange = merge(sHoldTimeInit, sHoldTimeInput);
-
-const cHoldTimeRaw = hold(sHoldTimeChange, "1000");
-
-cHoldTimeRaw.subscribe(function (v) {
+sHoldTimeInit.subscribe(function (v) {
   const e = document.querySelector("#holdTime");
   e.value = v;
 });
 
+const sHoldTimeInput = fromEvent(
+    document.querySelector("#holdTime"),
+    "input"
+).pipe(map((ev) => ev.target.value));
+
+const sHoldTimeChange = merge(sHoldTimeInit, sHoldTimeInput);
+
 const sHoldTimeParsed = sHoldTimeChange.pipe(
-  filter((v) => isHoldTimeInputValid(v))
+    filter((v) => isHoldTimeInputValid(v))
 );
 
-const cHoldTimeParsed = hold(sHoldTimeParsed, 1000);
-
-cHoldTimeParsed.subscribe(function (v) {
+sHoldTimeParsed.subscribe(function (v) {
   window.localStorage.setItem("holdTime", JSON.stringify(v));
 });
 
 const sIsHoldTimeValid = sHoldTimeChange.pipe(
-  map((v) => isHoldTimeInputValid(v))
+    map((v) => isHoldTimeInputValid(v))
 );
 
-const cIsHoldTimeValid = hold(sIsHoldTimeValid, true);
-
-cIsHoldTimeValid.subscribe(function (v) {
+sIsHoldTimeValid.subscribe(function (v) {
   const e = document.querySelector("#holdTime");
   e.setAttribute("aria-invalid", v ? "false" : "true");
 });
