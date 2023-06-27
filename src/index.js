@@ -6,6 +6,7 @@ Ignore everything below the dashed line, for this code at least.
 For a small, simple form like this, cells add an extra overhead.
 So now the form DOM elements hold the current state, while streams propagate the changes.
 No cells for now.
+
 ---------
 
 Cells hold the state. A cell variable is prefixed with `c`.
@@ -25,12 +26,6 @@ However, due to the merged stream of initial-value and user-changes, the above s
 
 So, while its likely not going to induce a recursive loop, this is a point of a discomfort. Let's wait and watch.
  */
-
-function hold(stream, defaultValue) {
-  const cell = new BehaviorSubject(defaultValue);
-  stream.subscribe(cell);
-  return cell;
-}
 
 function isHoldTimeInputValid(v) {
   return v.length > 0 && !Number.isNaN(parseInt(v)) && parseInt(v) >= 1000;
